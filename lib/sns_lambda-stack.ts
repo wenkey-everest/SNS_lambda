@@ -1,16 +1,27 @@
-import { Stack, StackProps } from 'aws-cdk-lib';
-import { Construct } from 'constructs';
-// import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { Stack, StackProps } from "aws-cdk-lib";
+import { Construct } from "constructs";
+import * as sns from "aws-cdk-lib/aws-sns";
+import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as lambdaEventSource from "aws-cdk-lib/aws-lambda-event-sources"
 
 export class SnsLambdaStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
-    // The code that defines your stack goes here
+    const topic = new sns.Topic(this, "newTopic", {
+      displayName: "New Topic",
+    });
 
-    // example resource
-    // const queue = new sqs.Queue(this, 'SnsLambdaQueue', {
-    //   visibilityTimeout: cdk.Duration.seconds(300)
-    // });
+    const snsTriggeredLambda = new lambda.Function(this, "snsTriggeredLambda", {
+      runtime: lambda.Runtime.NODEJS_12_X,
+      code: lambda.Code.fromAsset("src"),
+      handler: "index.handler",
+      functionName: "snsTriggeredLambda",
+    });
+
+    const snsLambdaEventSource = new lambdaEventSource.SnsEventSource(topic);
+    
+    snsTriggeredLambda.addEventSource(snsLambdaEventSource);
+
   }
 }
